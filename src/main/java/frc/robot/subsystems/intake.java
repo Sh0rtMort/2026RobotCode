@@ -8,6 +8,8 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+//TODO: make setpoint code and constant velocities and such
+
 public class intake extends SubsystemBase {
 
     private final TalonFX pivotMotor = new TalonFX(22);
@@ -16,7 +18,7 @@ public class intake extends SubsystemBase {
 
     public intake() {
         TalonFXConfiguration config = new TalonFXConfiguration();
-        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
         // PID for holding position — increase kP if it's not holding strong enough
         Slot0Configs slot0 = config.Slot0;
@@ -42,34 +44,65 @@ public class intake extends SubsystemBase {
     }
 
     // Stops the pivot motor (arm stays in place due to coast mode, may drift)
+    // coast mode should not be making it stay in the same place, but the opposite
     public void stopPivot() {
-        pivotMotor.set(0);
+        // pivotMotor.set(0);
+        pivotMotor.stopMotor();
     }
 
     // Locks the pivot arm at its current position using closed-loop PID control
+    //this is something a PID controller does automatically so there is no reason to do this yourself
+    @Deprecated
     public void lockPosition() {
         double currentPosition = pivotMotor.getPosition().getValueAsDouble();
         pivotMotor.setControl(positionRequest.withPosition(currentPosition));
     }
 
     // Releases position hold, returning the pivot motor to open-loop (coast/free)
+    // this is actually not how this works in the slightest
+    @Deprecated
     public void unlockPosition() {
-        pivotMotor.set(0);
+        // pivotMotor.set(0);
+        pivotMotor.stopMotor();
     }
 
     // Spins the intake roller at full speed (reverse direction) to pull game pieces in
     // NOTE: not fully certain if -1 is intake or outtake direction, depends on motor orientation
+    //TODO: stuff like this is fine for debugging but should never be used for actual matches
     public void runRollerMotor() {
         rollerMotor.set(-1);
     }
 
     // Stops the intake roller motor
     public void stopRoller() {
-        rollerMotor.set(0);
+        // rollerMotor.set(0);
+        rollerMotor.stopMotor();
     }
 
     // Returns the current pivot motor encoder position (in rotations)
     public double getPivotPosition() {
         return pivotMotor.getPosition().getValueAsDouble();
+    }
+
+
+
+
+    //Kadens coding section
+
+
+    public void zeroPivot() {
+        pivotMotor.setPosition(0); //zero as a double not an angle
+    }
+
+    public void setPivotVolatage(double volts) {
+        pivotMotor.setVoltage(volts);
+    }
+
+    public void setPivotSpeedPass(double speed) {
+        pivotMotor.set(speed);
+    }
+
+    public void runRollerVoltage(double volts) {
+        rollerMotor.setVoltage(volts);
     }
 }

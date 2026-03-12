@@ -12,6 +12,7 @@ import frc.robot.LimelightHelpers;
 import frc.robot.commands.AutoAlignCommand;
 import frc.robot.commands.FeedBallCommand;
 import frc.robot.commands.IntakeDownCommand;
+import frc.robot.commands.IntakePivotCommand;
 import frc.robot.commands.IntakeUpCommand;
 import frc.robot.commands.RunIntakeCommand;
 import frc.robot.commands.SpinShooterCommand;
@@ -189,13 +190,13 @@ driverController.rightBumper().whileTrue(
         );
 
         // X BUTTON = PIVOT DOWN
-        secondController.x().whileTrue(
-            new StartEndCommand(
-                () -> intakeSubsystem.pivotToDown(),
-                () -> intakeSubsystem.stopPivot(),
-                intakeSubsystem
-            )
-        );
+        // secondController.x().whileTrue(
+        //     new StartEndCommand(
+        //         () -> intakeSubsystem.pivotToDown(),
+        //         () -> intakeSubsystem.stopPivot(),
+        //         intakeSubsystem
+        //     )
+        // );
 
         // B BUTTON = REVERSE FEEDER + SORTER
         secondController.b().whileTrue(
@@ -231,9 +232,10 @@ driverController.leftTrigger().onFalse(
 );
 
         // RIGHT TRIGGER = SHOOTER
-        driverController.rightTrigger().whileTrue(
-            new RunCommand(() -> shooterSubsystem.runShooterMotor(), shooterSubsystem)
-        );
+        // driverController.rightTrigger().whileTrue(
+        //     // new RunCommand(() -> shooterSubsystem.runShooterMotor(), shooterSubsystem)
+            
+        // );
         driverController.rightTrigger().onFalse(
             new InstantCommand(() -> shooterSubsystem.stopShooter(), shooterSubsystem)
         );
@@ -271,6 +273,20 @@ driverController.leftTrigger().onFalse(
                 sorterSubsystem.stop();
                 feederSubsystem.stop();
             }, sorterSubsystem, feederSubsystem)
+        );
+
+
+
+        //yeah these control bindings are horrible
+        //why have the driver not in control of the intake? and why is the shooting sequence left d-pad?
+
+        driverController.a().onTrue(
+            //example setpoint number
+            new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint)
+        );
+
+        driverController.x().onTrue(
+            new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeStoreSetpoint)
         );
     }
 

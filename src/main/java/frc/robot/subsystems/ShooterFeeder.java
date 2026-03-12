@@ -9,17 +9,24 @@ public class ShooterFeeder extends SubsystemBase {
 
     // Runs the feeder motor at -30% to push game pieces toward the shooter
     // NOTE: not fully certain if -0.3 is toward shooter or away, depends on motor orientation
+    @Deprecated
     public void runFeederMotor() {
         feederMotor.set(-0.3);
     }
 
     // Runs the feeder motor in reverse at 80% to eject/unjam game pieces
+    @Deprecated
     public void runFeederMotorReverse() {
         feederMotor.set(0.8);
     }
 
     // Stops the feeder motor
     public void stop() {
-        feederMotor.set(0);
+        // feederMotor.set(0);
+        feederMotor.stopMotor();
+    }
+
+    public void runFeederVoltage(double volts) {
+        feederMotor.setVoltage(volts);
     }
 }
