@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
+import frc.robot.Constants;
 import frc.robot.subsystems.shooter;
 
 /**
@@ -10,7 +11,8 @@ import frc.robot.subsystems.shooter;
 public class SpinShooterCommand extends StartEndCommand {
     public SpinShooterCommand(shooter shooterSubsystem) {
         super(
-            () -> shooterSubsystem.runShooterMotor(),
+            // () -> shooterSubsystem.runShooterMotor(),
+            () -> shooterSubsystem.runShooterMotorPass(Constants.ShooterConstants.targetRPM),
             () -> shooterSubsystem.stopShooter(),
             shooterSubsystem
         );

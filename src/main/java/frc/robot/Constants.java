@@ -18,4 +18,11 @@ public final class Constants {
     public static final class ShooterConstants {
         public static final double targetRPM = 54;
     }
+
+    public static final class LimelightConstants {
+        public static final String limelightName = "2531";
+        public static final double limelightHeight = 12; //this is in inches
+        public static final double limelightPitchOffset = 25; //this is how angles the camera is
+
+    }
 }

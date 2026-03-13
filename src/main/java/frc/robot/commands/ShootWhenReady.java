@@ -26,7 +26,7 @@ public class ShootWhenReady extends Command{
     @Override
     public void execute() {
 
-        //this theoretically spinns the motor to the speed then waits for the motor to be there before firing
+        //this theoretically spins the motor to the speed then waits for the motor to be there before firing
         shooter.runShooterMotorPass(Constants.ShooterConstants.targetRPM);
         
         if (shooter.isShooterAtSpeed(Constants.ShooterConstants.targetRPM)) {

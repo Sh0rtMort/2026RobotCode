@@ -12,9 +12,7 @@ public class FeedBallCommand extends StartEndCommand {
     public FeedBallCommand(sorter sorterSubsystem, ShooterFeeder feederSubsystem) {
         super(
             () -> {
-                sorterSubsystem.runSorterMotor();
-                sorterSubsystem.runSorterVolts(-3); //examle voltage
-                feederSubsystem.runFeederMotor();
+                sorterSubsystem.runSorterVolts(-3); //example voltage
                 feederSubsystem.runFeederVoltage(-3); //also example
             },
             () -> {
