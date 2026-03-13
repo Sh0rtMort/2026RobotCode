@@ -9,21 +9,26 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import frc.robot.LimelightHelpers;
+import frc.robot.commands.AutoAim;
 import frc.robot.commands.AutoAlignCommand;
+import frc.robot.commands.BypassShooterCommand;
 import frc.robot.commands.FeedBallCommand;
 import frc.robot.commands.IntakeDownCommand;
 import frc.robot.commands.IntakePivotCommand;
 import frc.robot.commands.IntakeUpCommand;
 import frc.robot.commands.RunIntakeCommand;
+import frc.robot.commands.ShootWhenReady;
 import frc.robot.commands.SpinShooterCommand;
 import frc.robot.subsystems.intake;
 import frc.robot.subsystems.sorter;
 import frc.robot.subsystems.ShooterFeeder;
+import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.shooter;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -33,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public class RobotContainer {
@@ -43,8 +49,9 @@ public class RobotContainer {
     private final sorter sorterSubsystem = new sorter();
     private final ShooterFeeder feederSubsystem = new ShooterFeeder();
     private final shooter shooterSubsystem = new shooter();
+    private final Vision vision = new Vision();
 
-    private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    private double MaxSpeed = 0.75 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); //changed from 1.0 to 0.75
     private double MaxAngularRate = RotationsPerSecond.of(1.25).in(RadiansPerSecond);
 
     private final CommandXboxController driverController = new CommandXboxController(0);
@@ -70,86 +77,63 @@ public RobotContainer() {
     drivetrain = TunerConstants.createDrivetrain();
 
     // Then register named commands
-NamedCommands.registerCommand("IntakeDownSai",
-    new StartEndCommand(
-        () -> intakeSubsystem.pivotToDown(),
-        () -> intakeSubsystem.stopPivot(),
-        intakeSubsystem
-    ).withTimeout(0.2)
-);
+    NamedCommands.registerCommand("Intake Down", new ParallelCommandGroup(
+            new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint),
+            new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge))
+        )
+    );
 
+    NamedCommands.registerCommand("Intake Up", new ParallelCommandGroup(
+            new IntakePivotCommand(intakeSubsystem, 0),
+            new RunCommand(() -> intakeSubsystem.runRollerVoltage(0))
+        )
+    );
+    //idk what this is even supposed to be for
+// NamedCommands.registerCommand("RunIntakeSai",
+//     new SequentialCommandGroup(
+//         new StartEndCommand(
+//             () -> intakeSubsystem.runRollerMotor(),
+//             () -> {},
+//             intakeSubsystem
+//         ).withTimeout(0.5), // rollers spin for 0.5s first
+//         new StartEndCommand(
+//             () -> {
+//                 intakeSubsystem.lockPosition();
+//                 intakeSubsystem.runRollerMotor();
+//             },
+//             () -> {
+//                 intakeSubsystem.unlockPosition();
+//                 intakeSubsystem.stopRoller();
+//             },
+//             intakeSubsystem
+//         ).withTimeout(5.5) // then lock + keep spinning for remaining time
+//     )
+// );
+NamedCommands.registerCommand("No Calculator Shooting", new BypassShooterCommand(shooterSubsystem, sorterSubsystem, feederSubsystem));
 
+// NamedCommands.registerCommand("SpinShooterSai",
+//     new SpinShooterCommand(shooterSubsystem).withTimeout(1.5));
 
-NamedCommands.registerCommand("IntakeUpSai",
-    new StartEndCommand(
-        () -> intakeSubsystem.pivotToUp(),
-        () -> intakeSubsystem.stopPivot(),
-        intakeSubsystem
-    ).withTimeout(0.75)
-);
+// NamedCommands.registerCommand("FeedBallSai",
+//     new FeedBallCommand(sorterSubsystem, feederSubsystem).withTimeout(1.0));
 
-NamedCommands.registerCommand("RunIntakeSai",
-    new SequentialCommandGroup(
-        new StartEndCommand(
-            () -> intakeSubsystem.runRollerMotor(),
-            () -> {},
-            intakeSubsystem
-        ).withTimeout(0.5), // rollers spin for 0.5s first
-        new StartEndCommand(
-            () -> {
-                intakeSubsystem.lockPosition();
-                intakeSubsystem.runRollerMotor();
-            },
-            () -> {
-                intakeSubsystem.unlockPosition();
-                intakeSubsystem.stopRoller();
-            },
-            intakeSubsystem
-        ).withTimeout(5.5) // then lock + keep spinning for remaining time
-    )
-);
+NamedCommands.registerCommand("better shooting command", new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem));
+NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetrain, vision));
+// NamedCommands.registerCommand("AutoAlignSai",
+//     new AutoAlignCommand(drivetrain).withTimeout(2.5));
 
-NamedCommands.registerCommand("SpinShooterSai",
-    new SpinShooterCommand(shooterSubsystem).withTimeout(1.5));
-
-NamedCommands.registerCommand("FeedBallSai",
-    new FeedBallCommand(sorterSubsystem, feederSubsystem).withTimeout(1.0));
-
-NamedCommands.registerCommand("ShootSai",
-    new SequentialCommandGroup(
-        new StartEndCommand(
-            () -> shooterSubsystem.runShooterMotor(),
-            () -> {},  // don't stop yet, keep spinning into feed phase
-            shooterSubsystem
-        ).withTimeout(1.5),
-        new StartEndCommand(
-            () -> {
-                sorterSubsystem.runSorterMotor();
-                feederSubsystem.runFeederMotor();
-                shooterSubsystem.runShooterMotor();
-            },
-            () -> {
-                sorterSubsystem.stop();
-                feederSubsystem.stop();
-                shooterSubsystem.stopShooter(); // ← stops here after feed is done
-            },
-            sorterSubsystem, feederSubsystem, shooterSubsystem
-        ).withTimeout(7)
-    )
-);
-
-NamedCommands.registerCommand("AutoAlignSai",
-    new AutoAlignCommand(drivetrain).withTimeout(2.5));
-
-NamedCommands.registerCommand("Wait1sSai", Commands.waitSeconds(1.0));
-NamedCommands.registerCommand("Wait2sSai", Commands.waitSeconds(2.0));
-NamedCommands.registerCommand("Wait3sSai", Commands.waitSeconds(3.0));
-NamedCommands.registerCommand("Wait4sSai", Commands.waitSeconds(4.0));
+    //path planner has a built in wait command you can use
+// NamedCommands.registerCommand("Wait1sSai", Commands.waitSeconds(1.0));
+// NamedCommands.registerCommand("Wait2sSai", Commands.waitSeconds(2.0));
+// NamedCommands.registerCommand("Wait3sSai", Commands.waitSeconds(3.0));
+// NamedCommands.registerCommand("Wait4sSai", Commands.waitSeconds(4.0));
 
 
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Chooser", autoChooser);
     SmartDashboard.putData("Field", drivetrain.getField());
+
+    RobotController.setBrownoutVoltage(Constants.brownoutVoltage); //change this voltage number to what it should be
 
     configureBindings();
 }
@@ -158,35 +142,46 @@ NamedCommands.registerCommand("Wait4sSai", Commands.waitSeconds(4.0));
     private void configureBindings() {
 
 
-driverController.rightBumper().whileTrue(
-    drivetrain.applyRequest(() -> {
-        int tagID = (int) NetworkTableInstance.getDefault()
-            .getTable("limelight")
-            .getEntry("tid")
-            .getDouble(-1);
+// driverController.rightBumper().whileTrue(
+//     drivetrain.applyRequest(() -> {
+//         int tagID = (int) NetworkTableInstance.getDefault()
+//             .getTable("limelight")
+//             .getEntry("tid")
+//             .getDouble(-1);
 
-        if (!AutoAlignCommand.TAG_TARGETS.containsKey(tagID)) {
-            return brake;
-        }
+//         if (!AutoAlignCommand.TAG_TARGETS.containsKey(tagID)) {
+//             return brake;
+//         }
 
-        return limelightDrive
-            .withVelocityX((LimelightHelpers.getTY("limelight") - AutoAlignCommand.getTargetTYStatic(tagID)) * -0.15)
-            .withVelocityY((LimelightHelpers.getTX("limelight") - AutoAlignCommand.getTargetTXStatic(tagID)) * -0.15)
-            .withRotationalRate(0);
-    })
-);
+//         return limelightDrive
+//             .withVelocityX((LimelightHelpers.getTY("limelight") - AutoAlignCommand.getTargetTYStatic(tagID)) * -0.15)
+//             .withVelocityY((LimelightHelpers.getTX("limelight") - AutoAlignCommand.getTargetTXStatic(tagID)) * -0.15)
+//             .withRotationalRate(0);
+//     })
+// );
 
-        driverController.leftBumper()
-        .onTrue(new InstantCommand(() -> intakeSubsystem.lockPosition(), intakeSubsystem))
-        .onFalse(new InstantCommand(() -> intakeSubsystem.unlockPosition(), intakeSubsystem));
+    driverController.rightBumper().whileTrue(
+      new AutoAim(shooterSubsystem, drivetrain, vision)  
+    );
+
+        //lmaoooooo
+        // driverController.leftBumper()
+        // .onTrue(new InstantCommand(() -> intakeSubsystem.lockPosition(), intakeSubsystem))
+        // .onFalse(new InstantCommand(() -> intakeSubsystem.unlockPosition(), intakeSubsystem));
 
         // Y BUTTON = PIVOT UP
-        secondController.y().whileTrue(
-            new StartEndCommand(
-                () -> intakeSubsystem.pivotToUp(),
-                () -> intakeSubsystem.stopPivot(),
-                intakeSubsystem
-            )
+        // secondController.y().whileTrue(
+        //     new StartEndCommand(
+        //         () -> intakeSubsystem.pivotToUp(),
+        //         () -> intakeSubsystem.stopPivot(),
+        //         intakeSubsystem
+        //     )
+        // );
+
+        secondController.y().onTrue(
+            new ParallelCommandGroup(
+                new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint),
+                new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge)))
         );
 
         // X BUTTON = PIVOT DOWN
@@ -197,12 +192,26 @@ driverController.rightBumper().whileTrue(
         //         intakeSubsystem
         //     )
         // );
+        driverController.a().onTrue(
+            new ParallelCommandGroup(
+                new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint),
+                new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge)))
+        );
+
+        driverController.x().onTrue(
+            new ParallelCommandGroup(
+                new IntakePivotCommand(intakeSubsystem, 0),
+                new RunCommand(() -> intakeSubsystem.runRollerVoltage(0))
+            )
+        );
 
         // B BUTTON = REVERSE FEEDER + SORTER
         secondController.b().whileTrue(
             new RunCommand(() -> {
-                sorterSubsystem.runSorterMotorReverse();
-                feederSubsystem.runFeederMotorReverse();
+                // sorterSubsystem.runSorterMotorReverse();
+                sorterSubsystem.runSorterVolts(3);
+                // feederSubsystem.runFeederMotorReverse();
+                feederSubsystem.runFeederVoltage(3);
             }, sorterSubsystem, feederSubsystem)
         );
         secondController.b().onFalse(
@@ -212,46 +221,37 @@ driverController.rightBumper().whileTrue(
             }, sorterSubsystem, feederSubsystem)
         );
 
-// Default drive with slow mode on left trigger
-drivetrain.setDefaultCommand(
-    drivetrain.applyRequest(() -> {
-        double speedMult = driverController.leftTrigger().getAsBoolean() ? 0.2 : 1.0;
-        return drive
-            .withVelocityX(-driverController.getLeftY() * MaxSpeed * speedMult)
-            .withVelocityY(-driverController.getLeftX() * MaxSpeed * speedMult)
-            .withRotationalRate(-driverController.getRightX() * MaxAngularRate * speedMult);
-    })
-);
+        // Default drive with slow mode on left trigger
+        drivetrain.setDefaultCommand(
+            drivetrain.applyRequest(() -> {
+                double speedMult = driverController.leftTrigger().getAsBoolean() ? 0.2 : 0.6; //changed from 1.0 to 0.6
+                return drive
+                    .withVelocityX(-driverController.getLeftY() * MaxSpeed * speedMult)
+                    .withVelocityY(-driverController.getLeftX() * MaxSpeed * speedMult)
+                    .withRotationalRate(-driverController.getRightX() * MaxAngularRate * speedMult);
+            })
+        );
 
-// Left trigger also runs rollers (same button, both happen simultaneously)
-driverController.leftTrigger().whileTrue(
-    new RunCommand(() -> intakeSubsystem.runRollerMotor(), intakeSubsystem)
-);
-driverController.leftTrigger().onFalse(
-    new InstantCommand(() -> intakeSubsystem.stopRoller(), intakeSubsystem)
-);
+        // Left trigger also runs rollers (same button, both happen simultaneously)
+        driverController.leftTrigger().whileTrue(
+            new RunCommand(() -> intakeSubsystem.runRollerMotor(), intakeSubsystem)
+        );
+        driverController.leftTrigger().onFalse(
+            new InstantCommand(() -> intakeSubsystem.stopRoller(), intakeSubsystem)
+        );
 
         // RIGHT TRIGGER = SHOOTER
-        // driverController.rightTrigger().whileTrue(
-        //     // new RunCommand(() -> shooterSubsystem.runShooterMotor(), shooterSubsystem)
-            
-        // );
+        driverController.rightTrigger().whileTrue(
+            new RunCommand(() -> shooterSubsystem.runShooterMotorPass(Constants.ShooterConstants.targetRPS), shooterSubsystem)
+        );
         driverController.rightTrigger().onFalse(
             new InstantCommand(() -> shooterSubsystem.stopShooter(), shooterSubsystem)
         );
 
-        // DPAD LEFT = SHOOT SEQUENCE
         driverController.povLeft().whileTrue(
-            new SequentialCommandGroup(
-                new RunCommand(() -> shooterSubsystem.runShooterMotor(), shooterSubsystem)
-                    .withTimeout(1.5),
-                new RunCommand(() -> {
-                    sorterSubsystem.runSorterMotor();
-                    feederSubsystem.runFeederMotor();
-                    shooterSubsystem.runShooterMotor();
-                }, sorterSubsystem, feederSubsystem, shooterSubsystem)
-            )
+            new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem)
         );
+
         driverController.povLeft().onFalse(
             new InstantCommand(() -> {
                 sorterSubsystem.stop();
@@ -264,8 +264,8 @@ driverController.leftTrigger().onFalse(
         // DPAD UP = SORTER + FEEDER
         driverController.povUp().whileTrue(
             new RunCommand(() -> {
-                sorterSubsystem.runSorterMotor();
-                feederSubsystem.runFeederMotor();
+                sorterSubsystem.runSorterVolts(-3);
+                feederSubsystem.runFeederVoltage(-3);
             }, sorterSubsystem, feederSubsystem)
         );
         driverController.povUp().onFalse(
@@ -277,17 +277,6 @@ driverController.leftTrigger().onFalse(
 
 
 
-        //yeah these control bindings are horrible
-        //why have the driver not in control of the intake? and why is the shooting sequence left d-pad?
-
-        driverController.a().onTrue(
-            //example setpoint number
-            new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint)
-        );
-
-        driverController.x().onTrue(
-            new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeStoreSetpoint)
-        );
     }
 
     // Returns the autonomous command selected from the SmartDashboard auto chooser dropdown

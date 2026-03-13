@@ -12,7 +12,7 @@ public class SpinShooterCommand extends StartEndCommand {
     public SpinShooterCommand(shooter shooterSubsystem) {
         super(
             // () -> shooterSubsystem.runShooterMotor(),
-            () -> shooterSubsystem.runShooterMotorPass(Constants.ShooterConstants.targetRPM),
+            () -> shooterSubsystem.runShooterMotorPass(Constants.ShooterConstants.targetRPS),
             () -> shooterSubsystem.stopShooter(),
             shooterSubsystem
         );

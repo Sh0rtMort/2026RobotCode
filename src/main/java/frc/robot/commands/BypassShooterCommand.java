@@ -1,23 +1,27 @@
 package frc.robot.commands;
 
+import java.lang.constant.Constable;
+
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
 import frc.robot.subsystems.ShooterFeeder;
 import frc.robot.subsystems.shooter;
 import frc.robot.subsystems.sorter;
 
-public class ShootWhenReady extends Command{
+public class BypassShooterCommand extends Command{
 
     private shooter shooter;
     private sorter sorter;
     private ShooterFeeder feeder;
 
-    public ShootWhenReady(shooter shooter, sorter sorter, ShooterFeeder feeder) {
+    public BypassShooterCommand(shooter shooter, sorter sorter, ShooterFeeder feeder) {
         this.shooter = shooter;
         this.sorter = sorter;
         this.feeder = feeder;
     }
-
+    
     @Override
     public void initialize() {
         
@@ -25,16 +29,10 @@ public class ShootWhenReady extends Command{
 
     @Override
     public void execute() {
-
-        //this theoretically spins the motor to the speed then waits for the motor to be there before firing
-        shooter.runShooterMotorPass(Constants.ShooterConstants.targetRPS);
-        
-        if (shooter.isShooterAtSpeed(Constants.ShooterConstants.targetRPS)) {
-            shooter.runShooterMotorPass(Constants.ShooterConstants.targetRPS);
-            new FeedBallCommand(sorter, feeder);
-        } else {
-            shooter.runShooterMotorPass(Constants.ShooterConstants.targetRPS);
-        }
+        new SequentialCommandGroup(
+        new RunCommand(() -> shooter.runShooterMotorPass(Constants.ShooterConstants.targetRPS)).withTimeout(1),
+        new FeedBallCommand(sorter, feeder)
+        );
     }
 
     @Override
@@ -48,5 +46,4 @@ public class ShootWhenReady extends Command{
     public boolean isFinished() {
         return false;
     }
-    
 }
