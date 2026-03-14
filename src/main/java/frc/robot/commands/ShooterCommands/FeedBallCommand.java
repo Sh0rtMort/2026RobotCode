@@ -1,7 +1,9 @@
-package frc.robot.commands;
+package frc.robot.commands.ShooterCommands;
 
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import frc.robot.subsystems.sorter;
+import frc.robot.Constants.FeederConstants;
+import frc.robot.Constants.SorterConstants;
 import frc.robot.subsystems.ShooterFeeder;
 
 /**
@@ -12,8 +14,8 @@ public class FeedBallCommand extends StartEndCommand {
     public FeedBallCommand(sorter sorterSubsystem, ShooterFeeder feederSubsystem) {
         super(
             () -> {
-                sorterSubsystem.runSorterVolts(-3); //example voltage
-                feederSubsystem.runFeederVoltage(-3); //also example
+                sorterSubsystem.runSorterVolts(SorterConstants.sorterInVolts);
+                feederSubsystem.runFeederVoltage(FeederConstants.feederInVolts);
             },
             () -> {
                 sorterSubsystem.stop();

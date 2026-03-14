@@ -2,6 +2,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.lang.annotation.Documented;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -9,16 +11,18 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import frc.robot.LimelightHelpers;
-import frc.robot.commands.AutoAim;
-import frc.robot.commands.AutoAlignCommand;
-import frc.robot.commands.BypassShooterCommand;
-import frc.robot.commands.FeedBallCommand;
-import frc.robot.commands.IntakeDownCommand;
-import frc.robot.commands.IntakePivotCommand;
-import frc.robot.commands.IntakeUpCommand;
-import frc.robot.commands.RunIntakeCommand;
-import frc.robot.commands.ShootWhenReady;
-import frc.robot.commands.SpinShooterCommand;
+import frc.robot.commands.IntakeCommands.AgitateCommand;
+import frc.robot.commands.IntakeCommands.IntakeDownCommand;
+import frc.robot.commands.IntakeCommands.IntakePivotCommand;
+import frc.robot.commands.IntakeCommands.IntakeUpCommand;
+import frc.robot.commands.IntakeCommands.RunIntakeCommand;
+import frc.robot.commands.ShooterCommands.BypassShooterCommand;
+import frc.robot.commands.ShooterCommands.EjectBallsCommand;
+import frc.robot.commands.ShooterCommands.FeedBallCommand;
+import frc.robot.commands.ShooterCommands.ShootWhenReady;
+import frc.robot.commands.ShooterCommands.SpinShooterCommand;
+import frc.robot.commands.VisionCommands.AutoAim;
+import frc.robot.commands.VisionCommands.AutoAlignCommand;
 import frc.robot.subsystems.intake;
 import frc.robot.subsystems.sorter;
 import frc.robot.subsystems.ShooterFeeder;
@@ -141,42 +145,12 @@ NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetra
     // Maps controller buttons/triggers to robot actions (drive, intake, shooter, etc.)
     private void configureBindings() {
 
-
-// driverController.rightBumper().whileTrue(
-//     drivetrain.applyRequest(() -> {
-//         int tagID = (int) NetworkTableInstance.getDefault()
-//             .getTable("limelight")
-//             .getEntry("tid")
-//             .getDouble(-1);
-
-//         if (!AutoAlignCommand.TAG_TARGETS.containsKey(tagID)) {
-//             return brake;
-//         }
-
-//         return limelightDrive
-//             .withVelocityX((LimelightHelpers.getTY("limelight") - AutoAlignCommand.getTargetTYStatic(tagID)) * -0.15)
-//             .withVelocityY((LimelightHelpers.getTX("limelight") - AutoAlignCommand.getTargetTXStatic(tagID)) * -0.15)
-//             .withRotationalRate(0);
-//     })
-// );
-
-    driverController.rightBumper().whileTrue(
-      new AutoAim(shooterSubsystem, drivetrain, vision)  
-    );
-
-        //lmaoooooo
-        // driverController.leftBumper()
-        // .onTrue(new InstantCommand(() -> intakeSubsystem.lockPosition(), intakeSubsystem))
-        // .onFalse(new InstantCommand(() -> intakeSubsystem.unlockPosition(), intakeSubsystem));
-
-        // Y BUTTON = PIVOT UP
-        // secondController.y().whileTrue(
-        //     new StartEndCommand(
-        //         () -> intakeSubsystem.pivotToUp(),
-        //         () -> intakeSubsystem.stopPivot(),
-        //         intakeSubsystem
-        //     )
-        // );
+        /* SECOND CONTROLLER BINDINGS
+        Y = Intake to ground command
+        B = Eject balls command
+        A = Feed balls command
+        X = Agitate intake command
+        */
 
         secondController.y().onTrue(
             new ParallelCommandGroup(
@@ -184,41 +158,69 @@ NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetra
                 new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge)))
         );
 
-        // X BUTTON = PIVOT DOWN
-        // secondController.x().whileTrue(
-        //     new StartEndCommand(
-        //         () -> intakeSubsystem.pivotToDown(),
-        //         () -> intakeSubsystem.stopPivot(),
-        //         intakeSubsystem
-        //     )
-        // );
+        secondController.b().whileTrue(
+            new EjectBallsCommand(intakeSubsystem, feederSubsystem, sorterSubsystem)
+        );
+
+        secondController.a().whileTrue(
+            new FeedBallCommand(sorterSubsystem, feederSubsystem)
+        );
+
+        secondController.x().whileTrue(
+            new AgitateCommand(intakeSubsystem)
+        );
+
+        /* DRIVER CONTROLLER BINDINGS
+        A = Intake to ground command
+        X = Intake store command
+        B = Eject balls command
+        Left Trigger = run roller commands, not really needed
+        Left Trigger = Swerve slow mode
+        Right trigger = Shoot command, no rps safe guards
+        Left D-Pad = Shoot command, rps safe guard
+        Up D-Pad = Feed balls command
+        Right Bumper = Auto Aim
+        */
+
         driverController.a().onTrue(
             new ParallelCommandGroup(
                 new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint),
                 new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge)))
         );
-
+       
         driverController.x().onTrue(
             new ParallelCommandGroup(
                 new IntakePivotCommand(intakeSubsystem, 0),
                 new RunCommand(() -> intakeSubsystem.runRollerVoltage(0))
             )
         );
-
-        // B BUTTON = REVERSE FEEDER + SORTER
-        secondController.b().whileTrue(
-            new RunCommand(() -> {
-                // sorterSubsystem.runSorterMotorReverse();
-                sorterSubsystem.runSorterVolts(3);
-                // feederSubsystem.runFeederMotorReverse();
-                feederSubsystem.runFeederVoltage(3);
-            }, sorterSubsystem, feederSubsystem)
+        
+        driverController.b().whileTrue(
+            new EjectBallsCommand(intakeSubsystem, feederSubsystem, sorterSubsystem)
         );
-        secondController.b().onFalse(
-            new InstantCommand(() -> {
-                sorterSubsystem.stop();
-                feederSubsystem.stop();
-            }, sorterSubsystem, feederSubsystem)
+
+        // Left trigger also runs rollers (same button, both happen simultaneously)
+        driverController.leftTrigger().whileTrue(
+            new RunCommand(() -> intakeSubsystem.runRollerMotor(), intakeSubsystem)
+        );
+
+        // RIGHT TRIGGER = SHOOTER
+        driverController.rightTrigger().whileTrue(
+            // new RunCommand(() -> shooterSubsystem.runShooterMotorPass(Constants.ShooterConstants.targetRPS), shooterSubsystem)
+            new BypassShooterCommand(shooterSubsystem, sorterSubsystem, feederSubsystem)
+        );
+
+
+        driverController.povLeft().whileTrue(
+            new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem)
+        );
+
+          driverController.rightBumper().whileTrue(
+            new AutoAim(shooterSubsystem, drivetrain, vision)  
+        );
+
+        driverController.povUp().whileTrue(
+            new FeedBallCommand(sorterSubsystem, feederSubsystem)
         );
 
         // Default drive with slow mode on left trigger
@@ -232,50 +234,10 @@ NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetra
             })
         );
 
-        // Left trigger also runs rollers (same button, both happen simultaneously)
-        driverController.leftTrigger().whileTrue(
-            new RunCommand(() -> intakeSubsystem.runRollerMotor(), intakeSubsystem)
-        );
-        driverController.leftTrigger().onFalse(
-            new InstantCommand(() -> intakeSubsystem.stopRoller(), intakeSubsystem)
-        );
-
-        // RIGHT TRIGGER = SHOOTER
-        driverController.rightTrigger().whileTrue(
-            new RunCommand(() -> shooterSubsystem.runShooterMotorPass(Constants.ShooterConstants.targetRPS), shooterSubsystem)
-        );
-        driverController.rightTrigger().onFalse(
-            new InstantCommand(() -> shooterSubsystem.stopShooter(), shooterSubsystem)
-        );
-
-        driverController.povLeft().whileTrue(
-            new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem)
-        );
-
-        driverController.povLeft().onFalse(
-            new InstantCommand(() -> {
-                sorterSubsystem.stop();
-                feederSubsystem.stop();
-                shooterSubsystem.stopShooter();
-            }, sorterSubsystem, feederSubsystem, shooterSubsystem)
-        );
-
-
-        // DPAD UP = SORTER + FEEDER
-        driverController.povUp().whileTrue(
-            new RunCommand(() -> {
-                sorterSubsystem.runSorterVolts(-3);
-                feederSubsystem.runFeederVoltage(-3);
-            }, sorterSubsystem, feederSubsystem)
-        );
-        driverController.povUp().onFalse(
-            new InstantCommand(() -> {
-                sorterSubsystem.stop();
-                feederSubsystem.stop();
-            }, sorterSubsystem, feederSubsystem)
-        );
-
-
+        feederSubsystem.setDefaultCommand(feederSubsystem.run(() -> feederSubsystem.stop()));
+        shooterSubsystem.setDefaultCommand(shooterSubsystem.run(() -> shooterSubsystem.stopShooter()));
+        sorterSubsystem.setDefaultCommand(sorterSubsystem.run(() -> sorterSubsystem.stop()));
+        intakeSubsystem.setDefaultCommand(intakeSubsystem.run(() -> intakeSubsystem.stopRoller()));
 
     }
 

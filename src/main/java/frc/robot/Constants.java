@@ -32,4 +32,14 @@ public final class Constants {
         public static final double intakeVolatge = -3; //tune this
         public static final double ejectionVoltage = 3; //tune this
     }
+
+    public static final class SorterConstants {
+        public static final double sorterInVolts = -3; //tune this
+        public static final double sorterEjectVolts = 3; //tune this
+    }
+
+    public static final class FeederConstants {
+        public static final double feederInVolts = -3; //tune this
+        public static final double feederEjectVolts = 3; //tune this
+    }
 }
