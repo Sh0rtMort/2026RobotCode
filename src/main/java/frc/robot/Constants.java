@@ -1,5 +1,6 @@
 package frc.robot;
 
+import frc.robot.subsystems.shooter;
 
 //TODO: start putting contants in here so your not wasting time chasing them down in the subsystems
 public final class Constants {
@@ -25,7 +26,9 @@ public final class Constants {
         public static final String limelightName = "limelight"; //change this in the pipeline so its not being effected at comps
         public static final double limelightHeight = 12; //this is in inches, change this to the real measurment
         public static final double limelightPitchOffset = 25; //this is how angles the camera is, change this to the real measurment
-
+        public static final double limelightYaw = 0; // in degrees, facing forward so 0.
+        public static final double xOffset = 0; //in meters, left/right offset
+        public static final double yOffset = 0; //in meters, front/back offset
     }
 
     public static final class IntakeConstants {

@@ -24,7 +24,7 @@ import frc.robot.subsystems.Vision;
 
 public class TESTAimAtPose extends Command{
     private CommandSwerveDrivetrain swerve;
-    private Translation2d target = new Translation2d(fieldLength/4.25, 4.105);
+    private Translation2d target = new Translation2d(4.03, 4.105);
 
     private DoubleSupplier xSpeed;
     private DoubleSupplier ySpeed;

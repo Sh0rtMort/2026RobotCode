@@ -13,7 +13,9 @@ public class Vision extends SubsystemBase{
 
     public Vision() {
 
-        NetworkTable table = NetworkTableInstance.getDefault().getTable(limelightName);
+    }
+    public void configureLimelight() {
+    NetworkTable table = NetworkTableInstance.getDefault().getTable(limelightName);
         /* this sets the necessary tunings so the limelight gives an accurate pose
         TODO: do this to all parameters in the limelight constants
         -Height
