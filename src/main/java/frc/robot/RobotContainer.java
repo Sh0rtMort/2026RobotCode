@@ -3,6 +3,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import java.lang.annotation.Documented;
+import java.util.Optional;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -11,6 +12,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import frc.robot.LimelightHelpers;
+import frc.robot.Constants.SetpointConstants;
 import frc.robot.commands.IntakeCommands.AgitateCommand;
 import frc.robot.commands.IntakeCommands.IntakeDownCommand;
 import frc.robot.commands.IntakeCommands.IntakePivotCommand;
@@ -23,6 +25,7 @@ import frc.robot.commands.ShooterCommands.ShootWhenReady;
 import frc.robot.commands.ShooterCommands.SpinShooterCommand;
 import frc.robot.commands.VisionCommands.AutoAim;
 import frc.robot.commands.VisionCommands.AutoAlignCommand;
+import frc.robot.commands.VisionCommands.TESTAimAtPose;
 import frc.robot.subsystems.intake;
 import frc.robot.subsystems.sorter;
 import frc.robot.subsystems.ShooterFeeder;
@@ -30,9 +33,11 @@ import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.shooter;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -80,6 +85,10 @@ public RobotContainer() {
     // ✅ Initialize drivetrain FIRST
     drivetrain = TunerConstants.createDrivetrain();
 
+    vision.configureLimelight();
+
+    RobotController.setBrownoutVoltage(Constants.brownoutVoltage); //change this voltage number to what it should be
+
     // Then register named commands
     NamedCommands.registerCommand("Intake Down", new ParallelCommandGroup(
             new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint),
@@ -92,52 +101,30 @@ public RobotContainer() {
             new RunCommand(() -> intakeSubsystem.runRollerVoltage(0))
         )
     );
-    //idk what this is even supposed to be for
-// NamedCommands.registerCommand("RunIntakeSai",
-//     new SequentialCommandGroup(
-//         new StartEndCommand(
-//             () -> intakeSubsystem.runRollerMotor(),
-//             () -> {},
-//             intakeSubsystem
-//         ).withTimeout(0.5), // rollers spin for 0.5s first
-//         new StartEndCommand(
-//             () -> {
-//                 intakeSubsystem.lockPosition();
-//                 intakeSubsystem.runRollerMotor();
-//             },
-//             () -> {
-//                 intakeSubsystem.unlockPosition();
-//                 intakeSubsystem.stopRoller();
-//             },
-//             intakeSubsystem
-//         ).withTimeout(5.5) // then lock + keep spinning for remaining time
-//     )
-// );
-NamedCommands.registerCommand("No Calculator Shooting", new BypassShooterCommand(shooterSubsystem, sorterSubsystem, feederSubsystem));
 
-// NamedCommands.registerCommand("SpinShooterSai",
-//     new SpinShooterCommand(shooterSubsystem).withTimeout(1.5));
+    NamedCommands.registerCommand("No Calculator Shooting", new BypassShooterCommand(shooterSubsystem, sorterSubsystem, feederSubsystem));
 
-// NamedCommands.registerCommand("FeedBallSai",
-//     new FeedBallCommand(sorterSubsystem, feederSubsystem).withTimeout(1.0));
+    // NamedCommands.registerCommand("SpinShooterSai",
+    //     new SpinShooterCommand(shooterSubsystem).withTimeout(1.5));
 
-NamedCommands.registerCommand("better shooting command", new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem));
-NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetrain, vision));
-// NamedCommands.registerCommand("AutoAlignSai",
-//     new AutoAlignCommand(drivetrain).withTimeout(2.5));
+    // NamedCommands.registerCommand("FeedBallSai",
+    //     new FeedBallCommand(sorterSubsystem, feederSubsystem).withTimeout(1.0));
 
-    //path planner has a built in wait command you can use
-// NamedCommands.registerCommand("Wait1sSai", Commands.waitSeconds(1.0));
-// NamedCommands.registerCommand("Wait2sSai", Commands.waitSeconds(2.0));
-// NamedCommands.registerCommand("Wait3sSai", Commands.waitSeconds(3.0));
-// NamedCommands.registerCommand("Wait4sSai", Commands.waitSeconds(4.0));
+    NamedCommands.registerCommand("better shooting command", new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem));
+    NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetrain, vision));
+    // NamedCommands.registerCommand("AutoAlignSai",
+    //     new AutoAlignCommand(drivetrain).withTimeout(2.5));
+
+        //path planner has a built in wait command you can use
+    // NamedCommands.registerCommand("Wait1sSai", Commands.waitSeconds(1.0));
+    // NamedCommands.registerCommand("Wait2sSai", Commands.waitSeconds(2.0));
+    // NamedCommands.registerCommand("Wait3sSai", Commands.waitSeconds(3.0));
+    // NamedCommands.registerCommand("Wait4sSai", Commands.waitSeconds(4.0));
 
 
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Chooser", autoChooser);
     SmartDashboard.putData("Field", drivetrain.getField());
-
-    RobotController.setBrownoutVoltage(Constants.brownoutVoltage); //change this voltage number to what it should be
 
     configureBindings();
 }
@@ -185,18 +172,26 @@ NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetra
         driverController.a().onTrue(
             new ParallelCommandGroup(
                 new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint),
-                new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge)))
+                new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge)),
+                new InstantCommand(() -> SmartDashboard.putNumber("New Intake Tarket", SetpointConstants.intakeGroundSetpoint)),
+                new RunCommand(() -> SmartDashboard.putBoolean("Intake Rollers Running?", true))
+            )
         );
        
         driverController.x().onTrue(
             new ParallelCommandGroup(
-                new IntakePivotCommand(intakeSubsystem, 0),
-                new RunCommand(() -> intakeSubsystem.runRollerVoltage(0))
-            )
+                new IntakePivotCommand(intakeSubsystem, SetpointConstants.intakeStoreSetpoint),
+                new RunCommand(() -> intakeSubsystem.runRollerVoltage(0)),
+                new InstantCommand(() -> SmartDashboard.putNumber("New Intake Tarket", SetpointConstants.intakeStoreSetpoint)),
+                new RunCommand(() -> SmartDashboard.putBoolean("Intake Rollers Running?", false))
+            ).withTimeout(2) //this timeout allows the intake to go loosey-goosey after being at the setpoint for some time to conserve battery
         );
         
         driverController.b().whileTrue(
-            new EjectBallsCommand(intakeSubsystem, feederSubsystem, sorterSubsystem)
+            new ParallelCommandGroup(
+            new EjectBallsCommand(intakeSubsystem, feederSubsystem, sorterSubsystem),
+            new RunCommand(() -> SmartDashboard.putBoolean("Ejecting Balls?", true))
+            )
         );
 
         // Left trigger also runs rollers (same button, both happen simultaneously)
@@ -210,7 +205,6 @@ NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetra
             new BypassShooterCommand(shooterSubsystem, sorterSubsystem, feederSubsystem)
         );
 
-
         driverController.povLeft().whileTrue(
             new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem)
         );
@@ -220,7 +214,18 @@ NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetra
         );
 
         driverController.povUp().whileTrue(
-            new FeedBallCommand(sorterSubsystem, feederSubsystem)
+            new ParallelCommandGroup(
+            new FeedBallCommand(sorterSubsystem, feederSubsystem),
+            new RunCommand(() -> SmartDashboard.putBoolean("Feeding Balls?", true))
+            )
+        );
+
+        //holy fuck this actually works
+        driverController.povRight().whileTrue(
+            new TESTAimAtPose(drivetrain,
+             () -> -driverController.getLeftY() * MaxSpeed * 0.8,
+             () -> -driverController.getLeftX() * MaxSpeed * 0.8
+            ) 
         );
 
         // Default drive with slow mode on left trigger

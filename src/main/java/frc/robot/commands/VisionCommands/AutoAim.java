@@ -4,6 +4,7 @@ import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Vision;
@@ -45,11 +46,17 @@ public class AutoAim extends Command{
         .withVelocityY(0)
         .withRotationalRate(rotation)
         );
+
+        SmartDashboard.putNumber("Distance to Rotate", vision.getTXValue());
+
+        if (Math.abs(vision.getTXValue()) <= tolerance) SmartDashboard.putBoolean("At Target?", true);
+        else SmartDashboard.putBoolean("At Target?", false);
     }
 
     @Override
     public void end(boolean interrupted) {
         swerve.setControl(alignRequest.withRotationalRate(0));
+        
     }
 
     @Override

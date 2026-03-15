@@ -22,16 +22,18 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
+import frc.robot.LimelightHelpers;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 
 /**
@@ -264,7 +266,8 @@ configureAutoBuilder(); // ADD THIS
 
     @Override
     public void periodic() {
-
+        //added with my experiements
+        updateVisionPose();
     m_field.setRobotPose(getState().Pose);
         
         /*
@@ -274,7 +277,6 @@ configureAutoBuilder(); // ADD THIS
          * Otherwise, only check and apply the operator perspective if the DS is disabled.
          * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
          */
-
     }
 
     // Starts a high-frequency simulation thread (4ms loop) to update drivetrain physics in sim
@@ -343,7 +345,43 @@ configureAutoBuilder(); // ADD THIS
     return m_field;
 }
 
+//Comment out before deploying to actual robot
+ private final SwerveRequest.FieldCentricFacingAngle aimRequest =
+    new SwerveRequest.FieldCentricFacingAngle();
 
+public void aimAtPoint(Translation2d target, double speedX, double speedY) {
+    aimRequest.HeadingController.setPID(6.0, 0.0, 0.2); //TODO:these need major adjustments to work
+    aimRequest.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    Pose2d robotPose = getState().Pose;
+
+    Rotation2d targetAngle =
+        target.minus(robotPose.getTranslation()).getAngle();
+
+    setControl(
+        aimRequest
+            .withTargetDirection(targetAngle)
+            .withVelocityX(speedX)
+            .withVelocityY(speedY)
+    );
+}
+
+public void updateVisionPose() {
+    var ll = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+
+    if (ll != null && ll.tagCount > 0) {
+
+        // Reject bad measurements
+        if (Math.abs(getState().Speeds.omegaRadiansPerSecond) > 2.0) return;
+
+        Pose2d visionPose = ll.pose;
+
+        double timestamp =
+            Timer.getFPGATimestamp() - (ll.latency / 1000.0);
+
+        addVisionMeasurement(visionPose, timestamp);
+    }
+}
 
     
 }

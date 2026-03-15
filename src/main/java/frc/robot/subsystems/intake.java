@@ -59,7 +59,6 @@ public class intake extends SubsystemBase {
     }
 
     // Releases position hold, returning the pivot motor to open-loop (coast/free)
-    // this is actually not how this works in the slightest
     @Deprecated
     public void unlockPosition() {
         // pivotMotor.set(0);
@@ -77,6 +76,7 @@ public class intake extends SubsystemBase {
     public void stopRoller() {
         // rollerMotor.set(0);
         rollerMotor.stopMotor();
+        SmartDashboard.putBoolean("Intake Rollers Running?", false);
     }
 
     // Returns the current pivot motor encoder position (in rotations)
@@ -88,8 +88,6 @@ public class intake extends SubsystemBase {
 
 
     //Kadens coding section
-
-
     public void zeroPivot() {
         pivotMotor.setPosition(0); //zero as a double not an angle
     }

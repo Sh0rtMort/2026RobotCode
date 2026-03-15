@@ -1,5 +1,6 @@
 package frc.robot.commands.ShooterCommands;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import frc.robot.subsystems.sorter;
 import frc.robot.Constants.FeederConstants;
@@ -12,6 +13,7 @@ import frc.robot.subsystems.ShooterFeeder;
  */
 public class FeedBallCommand extends StartEndCommand {
     public FeedBallCommand(sorter sorterSubsystem, ShooterFeeder feederSubsystem) {
+        
         super(
             () -> {
                 sorterSubsystem.runSorterVolts(SorterConstants.sorterInVolts);

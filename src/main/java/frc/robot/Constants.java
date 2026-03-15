@@ -18,13 +18,13 @@ public final class Constants {
     }
     
     public static final class ShooterConstants {
-        public static final double targetRPS = 54;
+        public static final double targetRPS = 54; //tune this
     }
 
     public static final class LimelightConstants {
-        public static final String limelightName = "limelight";
-        public static final double limelightHeight = 12; //this is in inches
-        public static final double limelightPitchOffset = 25; //this is how angles the camera is
+        public static final String limelightName = "limelight"; //change this in the pipeline so its not being effected at comps
+        public static final double limelightHeight = 12; //this is in inches, change this to the real measurment
+        public static final double limelightPitchOffset = 25; //this is how angles the camera is, change this to the real measurment
 
     }
 

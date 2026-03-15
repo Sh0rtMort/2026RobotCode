@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterFeeder extends SubsystemBase {
@@ -24,6 +26,9 @@ public class ShooterFeeder extends SubsystemBase {
     public void stop() {
         // feederMotor.set(0);
         feederMotor.stopMotor();
+        //due to the default command, these will be false until activated
+        SmartDashboard.putBoolean("Feeding Balls?", false);
+        SmartDashboard.putBoolean("Ejecting Balls?", false);
     }
 
     public void runFeederVoltage(double volts) {

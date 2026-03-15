@@ -68,15 +68,6 @@ public class shooter extends SubsystemBase {
         shooterMotor.stopMotor();
     }
 
-    //redundant
-    // public boolean isShooterAtSpeed(double targetSpeed) {
-    //     if (getShooterSpeed() >= targetSpeed) {
-    //         return true;
-    //     } else {
-    //         return false;
-    //     }
-    // }
-
     public boolean isShooterAtSpeed(double target) {
         double allowedError = 3; //allowed to be off by 3 rps and still fire
         return Math.abs(getShooterSpeed() - target) < allowedError;

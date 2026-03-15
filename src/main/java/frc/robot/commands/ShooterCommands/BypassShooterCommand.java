@@ -2,6 +2,7 @@ package frc.robot.commands.ShooterCommands;
 
 import java.lang.constant.Constable;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -33,6 +34,8 @@ public class BypassShooterCommand extends Command{
         new RunCommand(() -> shooter.runShooterMotorPass(Constants.ShooterConstants.targetRPS)).withTimeout(1),
         new FeedBallCommand(sorter, feeder)
         );
+
+        SmartDashboard.putBoolean("Shooter Bypass On?", true);
     }
 
     @Override
@@ -40,6 +43,8 @@ public class BypassShooterCommand extends Command{
         shooter.stopShooter();
         sorter.stop();
         feeder.stop();
+
+        SmartDashboard.putBoolean("Shooter Bypass On?", false);
     }
 
     @Override
