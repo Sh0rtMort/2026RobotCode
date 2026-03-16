@@ -11,7 +11,7 @@ public class HoodTable {
     static {
         /* change these to match what you need them to be. Example to follow
         KEY = this is the limelight distance to the target, in meters
-
+        VALUE = this is the degrees of the hood that make it work
         */
         hoodTable.put(1.5, 10.0); 
         hoodTable.put(2.0, 15.0);

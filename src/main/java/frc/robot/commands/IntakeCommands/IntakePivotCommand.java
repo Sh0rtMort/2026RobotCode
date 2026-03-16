@@ -28,7 +28,7 @@ public class IntakePivotCommand extends Command{
 
     @Override
     public void initialize() {
-
+        SmartDashboard.putNumber("New Intake Tarket", setpoint);
     }
 
     @Override

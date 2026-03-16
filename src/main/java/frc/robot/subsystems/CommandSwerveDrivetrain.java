@@ -358,7 +358,7 @@ public void aimAtPoint(Translation2d target, double speedX, double speedY) {
     Pose2d robotPose = getState().Pose;
 
     Rotation2d targetAngle =
-        target.minus(robotPose.getTranslation()).getAngle();
+        target.minus(robotPose.getTranslation()).getAngle().plus(Rotation2d.fromRadians(Math.PI));
 
     setControl(
         aimRequest

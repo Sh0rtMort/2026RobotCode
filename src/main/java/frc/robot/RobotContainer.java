@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 
 import java.lang.annotation.Documented;
 import java.util.Optional;
+import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -96,13 +97,15 @@ public RobotContainer() {
     // Then register named commands
     NamedCommands.registerCommand("Intake Down", new ParallelCommandGroup(
             new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint),
-            new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge))
+            new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge)),
+            new RunCommand(() -> SmartDashboard.putBoolean("Intake Rollers Running?", true))
         )
     );
 
     NamedCommands.registerCommand("Intake Up", new ParallelCommandGroup(
             new IntakePivotCommand(intakeSubsystem, 0),
-            new RunCommand(() -> intakeSubsystem.runRollerVoltage(0))
+            new RunCommand(() -> intakeSubsystem.runRollerVoltage(0)),
+            new RunCommand(() -> SmartDashboard.putBoolean("Intake Rollers Running?", false))
         )
     );
 
@@ -115,7 +118,9 @@ public RobotContainer() {
     //     new FeedBallCommand(sorterSubsystem, feederSubsystem).withTimeout(1.0));
 
     NamedCommands.registerCommand("better shooting command", new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem));
-    NamedCommands.registerCommand("auto Aim", new AutoAim(shooterSubsystem, drivetrain, vision));
+    NamedCommands.registerCommand("Vision auto Aim", new AutoAim(shooterSubsystem, drivetrain, vision));
+    NamedCommands.registerCommand("Pose Auto Aim", new TESTAimAtPose(drivetrain, () -> 0, () -> 0));
+    NamedCommands.registerCommand("Pose Hood Adjustment", new PositionHoodAim(drivetrain, hood));
     // NamedCommands.registerCommand("AutoAlignSai",
     //     new AutoAlignCommand(drivetrain).withTimeout(2.5));
 
@@ -177,7 +182,7 @@ public RobotContainer() {
             new ParallelCommandGroup(
                 new IntakePivotCommand(intakeSubsystem, Constants.SetpointConstants.intakeGroundSetpoint),
                 new RunCommand(() -> intakeSubsystem.runRollerVoltage(Constants.IntakeConstants.intakeVolatge)),
-                new InstantCommand(() -> SmartDashboard.putNumber("New Intake Tarket", SetpointConstants.intakeGroundSetpoint)),
+                // new InstantCommand(() -> SmartDashboard.putNumber("New Intake Tarket", SetpointConstants.intakeGroundSetpoint)),
                 new RunCommand(() -> SmartDashboard.putBoolean("Intake Rollers Running?", true))
             )
         );
@@ -186,7 +191,7 @@ public RobotContainer() {
             new ParallelCommandGroup(
                 new IntakePivotCommand(intakeSubsystem, SetpointConstants.intakeStoreSetpoint),
                 new RunCommand(() -> intakeSubsystem.runRollerVoltage(0)),
-                new InstantCommand(() -> SmartDashboard.putNumber("New Intake Tarket", SetpointConstants.intakeStoreSetpoint)),
+                // new InstantCommand(() -> SmartDashboard.putNumber("New Intake Tarket", SetpointConstants.intakeStoreSetpoint)),
                 new RunCommand(() -> SmartDashboard.putBoolean("Intake Rollers Running?", false))
             ).withTimeout(2) //this timeout allows the intake to go loosey-goosey after being at the setpoint for some time to conserve battery
         );
@@ -214,7 +219,7 @@ public RobotContainer() {
                 () -> -driverController.getLeftX() * MaxSpeed * 0.8
                 ),
                 new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem),
-                new PositionHoodAim(drivetrain, hood) //this should theoretically do the same thing as AimAtPose
+                new PositionHoodAim(drivetrain, hood)
             )
         );
 

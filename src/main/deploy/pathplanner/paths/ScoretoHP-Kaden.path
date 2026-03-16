@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.2920454545454545,
-        "y": 3.983465909090908
+        "x": 1.014,
+        "y": 3.707168674698795
       },
       "isLocked": false,
       "linkedName": "ScorePoint"
@@ -20,15 +20,20 @@
         "y": 0.6131363636363643
       },
       "prevControl": {
-        "x": 1.4159659090909087,
-        "y": 1.1490909090909098
+        "x": 3.412632530120481,
+        "y": 0.2525219058050392
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": "HumanPlayerIntake"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.5,
+      "rotationDegrees": 180.0
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],

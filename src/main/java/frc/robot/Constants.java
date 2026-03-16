@@ -1,7 +1,5 @@
 package frc.robot;
 
-import frc.robot.subsystems.shooter;
-
 //TODO: start putting contants in here so your not wasting time chasing them down in the subsystems
 public final class Constants {
 
