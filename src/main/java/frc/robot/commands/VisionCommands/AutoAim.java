@@ -3,6 +3,7 @@ package frc.robot.commands.VisionCommands;
 import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -39,18 +40,26 @@ public class AutoAim extends Command{
 
     @Override
     public void execute() {
-        double rotation = pidController.calculate(vision.getTXValue(), 0);
 
-        swerve.setControl(alignRequest
-        .withVelocityX(0)
-        .withVelocityY(0)
-        .withRotationalRate(rotation)
+        if(!vision.hasTarget()){
+            swerve.setControl(alignRequest.withRotationalRate(0));
+            return;
+        }
+
+        double rotation = MathUtil.clamp(
+            pidController.calculate(vision.getTXValue(), 0),
+            -3,
+            3
         );
 
-        SmartDashboard.putNumber("Distance to Rotate", vision.getTXValue());
+        swerve.setControl(alignRequest
+            .withVelocityX(0)
+            .withVelocityY(0)
+            .withRotationalRate(rotation)
+        );
 
-        if (Math.abs(vision.getTXValue()) <= tolerance) SmartDashboard.putBoolean("At Target?", true);
-        else SmartDashboard.putBoolean("At Target?", false);
+        SmartDashboard.putNumber("TX", vision.getTXValue());
+        SmartDashboard.putBoolean("At Target?", pidController.atSetpoint());
     }
 
     @Override

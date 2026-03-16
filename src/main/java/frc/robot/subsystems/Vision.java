@@ -86,4 +86,14 @@ public class Vision extends SubsystemBase{
             .getDouble(-1);
     }
 
+    public static double getDistanceMeters() {
+        double targetHeight = 1.45; //meters, height of apriltag
+        
+        double ty = LimelightHelpers.getTY(LimelightConstants.limelightName);
+        double angleToTargetDeg = LimelightConstants.limelightPitchOffset + ty;
+        double angleToTargetRad = Math.toRadians(angleToTargetDeg);
+
+        return (targetHeight - LimelightConstants.limelightHeight) / Math.tan(angleToTargetRad);
+    }
+
 }

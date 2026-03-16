@@ -20,6 +20,9 @@ public final class Constants {
     
     public static final class ShooterConstants {
         public static final double targetRPS = 54; //tune this
+        public static final double defaultHoodAngle = 5; //angle, example default
+        public static final double minShootingDistance = 0.2; //meters, example default
+        public static final double maxShootingDistance = 5; //meters, example default
     }
 
     public static final class LimelightConstants {

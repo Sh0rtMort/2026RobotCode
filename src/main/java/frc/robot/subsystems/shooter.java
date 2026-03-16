@@ -69,7 +69,7 @@ public class shooter extends SubsystemBase {
     }
 
     public boolean isShooterAtSpeed(double target) {
-        double allowedError = 3; //allowed to be off by 3 rps and still fire
+        double allowedError = 5; //allowed to be off by 5 rps and still fire
         return Math.abs(getShooterSpeed() - target) < allowedError;
     }
 

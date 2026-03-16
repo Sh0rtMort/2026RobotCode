@@ -29,9 +29,11 @@ public class TESTAimAtPose extends Command{
     private DoubleSupplier xSpeed;
     private DoubleSupplier ySpeed;
 
+    private double maxSpeed = 0.8;
 
     public static final double fieldLength = 16.54;
 
+    //make sure that the field and apriltags are in the proper locations before using this command
     //this aim relies on the robot knowing its position based on the limelight, make sure its tuned well before using
     public TESTAimAtPose(CommandSwerveDrivetrain swerve, DoubleSupplier xSpeed, DoubleSupplier ySpeed) {
         this.swerve = swerve;
@@ -50,7 +52,7 @@ public class TESTAimAtPose extends Command{
     @Override
     public void execute() {
         Translation2d newTarget = getAllianceAdjustedPoint(target);
-        swerve.aimAtPoint(newTarget, xSpeed.getAsDouble(), ySpeed.getAsDouble());
+        swerve.aimAtPoint(newTarget, xSpeed.getAsDouble() * maxSpeed, ySpeed.getAsDouble() * maxSpeed);
     }
 
     @Override
@@ -62,8 +64,6 @@ public class TESTAimAtPose extends Command{
     public boolean isFinished() {
         return false;
     }
-
-
 
     //change target depending on alliance
     public static Translation2d getAllianceAdjustedPoint(Translation2d bluePoint) {

@@ -3,6 +3,8 @@ package frc.robot.commands.ShooterCommands;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
+import frc.robot.Constants.FeederConstants;
+import frc.robot.Constants.SorterConstants;
 import frc.robot.subsystems.ShooterFeeder;
 import frc.robot.subsystems.shooter;
 import frc.robot.subsystems.sorter;
@@ -25,18 +27,22 @@ public class ShootWhenReady extends Command{
     }
 
     @Override
-    public void execute() {
+    public void execute() {        
 
-        //this theoretically spins the motor to the speed then waits for the motor to be there before firing
-        shooter.runShooterMotorPass(Constants.ShooterConstants.targetRPS);
+        double target = Constants.ShooterConstants.targetRPS;
+
+        shooter.runShooterMotorPass(target);
+
         SmartDashboard.putNumber("Shooter RPS", shooter.getShooterSpeed());
-        
-        if (shooter.isShooterAtSpeed(Constants.ShooterConstants.targetRPS)) {
-            shooter.runShooterMotorPass(Constants.ShooterConstants.targetRPS);
-            new FeedBallCommand(sorter, feeder);
+
+        if (shooter.isShooterAtSpeed(target)) {
+            sorter.runSorterVolts(SorterConstants.sorterInVolts);
+            feeder.runFeederVoltage(FeederConstants.feederInVolts);
         } else {
-            shooter.runShooterMotorPass(Constants.ShooterConstants.targetRPS);
+            sorter.stop();
+            feeder.stop();
         }
+
         SmartDashboard.putBoolean("Shooting When Ready?", true);
     }
 

@@ -4,6 +4,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -19,6 +20,8 @@ public class intake extends SubsystemBase {
     public intake() {
         TalonFXConfiguration config = new TalonFXConfiguration();
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        // config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive; //uncomment whatever is right if the PID controller breaks it
+        // config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         // PID for holding position — increase kP if it's not holding strong enough
         Slot0Configs slot0 = config.Slot0;

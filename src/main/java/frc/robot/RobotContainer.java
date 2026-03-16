@@ -25,7 +25,9 @@ import frc.robot.commands.ShooterCommands.ShootWhenReady;
 import frc.robot.commands.ShooterCommands.SpinShooterCommand;
 import frc.robot.commands.VisionCommands.AutoAim;
 import frc.robot.commands.VisionCommands.AutoAlignCommand;
+import frc.robot.commands.VisionCommands.PositionHoodAim;
 import frc.robot.commands.VisionCommands.TESTAimAtPose;
+import frc.robot.commands.VisionCommands.VisionHoodAim;
 import frc.robot.subsystems.intake;
 import frc.robot.subsystems.sorter;
 import frc.robot.subsystems.ShooterFeeder;
@@ -33,6 +35,7 @@ import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.shooter;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.HoodSubsystem;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -59,6 +62,7 @@ public class RobotContainer {
     private final ShooterFeeder feederSubsystem = new ShooterFeeder();
     private final shooter shooterSubsystem = new shooter();
     private final Vision vision = new Vision();
+    private final HoodSubsystem hood = new HoodSubsystem();
 
     private double MaxSpeed = 0.75 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); //changed from 1.0 to 0.75
     private double MaxAngularRate = RotationsPerSecond.of(1.25).in(RadiansPerSecond);
@@ -191,6 +195,26 @@ public RobotContainer() {
             new ParallelCommandGroup(
             new EjectBallsCommand(intakeSubsystem, feederSubsystem, sorterSubsystem),
             new RunCommand(() -> SmartDashboard.putBoolean("Ejecting Balls?", true))
+            )
+        );
+
+        //if properly tuned, this could be used as moving and shooting command
+        driverController.y().whileTrue(
+            new ParallelCommandGroup(
+                new AutoAim(shooterSubsystem, drivetrain, vision),
+                new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem),
+                new VisionHoodAim(shooterSubsystem, vision, hood)
+            )
+        );
+
+        driverController.leftBumper().whileTrue(
+            new ParallelCommandGroup(
+                new TESTAimAtPose(drivetrain,
+                () -> -driverController.getLeftY() * MaxSpeed * 0.8,
+                () -> -driverController.getLeftX() * MaxSpeed * 0.8
+                ),
+                new ShootWhenReady(shooterSubsystem, sorterSubsystem, feederSubsystem),
+                new PositionHoodAim(drivetrain, hood) //this should theoretically do the same thing as AimAtPose
             )
         );
 
